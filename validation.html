@@ -1,63 +1,61 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verificación de Enlace</title>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <title>Validando tu enlace...</title>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="firebaseConfig.js"></script>
 </head>
-<body>
-    <h1>Verificación del enlace</h1>
-    <div id="message"></div>
+<body style="font-family: sans-serif; padding: 2rem; text-align: center;">
+  <h2>Procesando tu enlace...</h2>
+  <p id="status">Un momento...</p>
 
-    <script src="firebaseConfig.js"></script>
-    <script>
-        const db = firebase.firestore();
+  <script>
+    const db = firebase.firestore();
 
-        // Obtener el token de la URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
+    const getTokenFromURL = () => {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("token");
+    };
 
-        // Función para verificar el estado del enlace
-        const checkLinkStatus = async () => {
-            const docRef = db.collection('links').doc(token);
-            const doc = await docRef.get();
+    const validateToken = async (token) => {
+      const docRef = db.collection("links").doc(token);
+      const doc = await docRef.get();
 
-            if (!doc.exists) {
-                document.getElementById('message').innerText = "Este enlace ha expirado o no es válido.";
-                return;
-            }
+      if (!doc.exists) {
+        return "❌ Token inválido.";
+      }
 
-            const linkData = doc.data();
-            const currentTime = new Date().getTime();
-            const expirationTime = linkData.timestamp + 60000; // 1 minuto (60000 ms)
-            const clickLimit = 1;
+      const data = doc.data();
+      const now = Date.now();
+      const diff = (now - data.timestamp) / 1000;
 
-            // Verificar si el enlace ha expirado o si el número de clics ha alcanzado el límite
-            if (currentTime > expirationTime) {
-                document.getElementById('message').innerText = "Este enlace ha expirado.";
-                docRef.update({ expired: true });
-                return;
-            }
+      if (data.expired || data.clicks > 0) {
+        return "❌ Este enlace ya fue usado o expiró.";
+      }
 
-            if (linkData.clicks >= clickLimit) {
-                document.getElementById('message').innerText = "Este enlace ha alcanzado el límite de clics.";
-                docRef.update({ expired: true });
-                return;
-            }
+      if (diff > 60) {
+        await docRef.update({ expired: true });
+        return "⏰ El enlace ha expirado (más de 1 minuto).";
+      }
 
-            // Si no ha expirado y no ha alcanzado el límite de clics, incrementar los clics
-            await docRef.update({
-                clicks: linkData.clicks + 1
-            });
+      // Si es válido
+      await docRef.update({ clicks: 1, expired: true });
+      window.location.href = `https://qkstzdro6ry.typeform.com/IESsystems?token=${token}`;
+    };
 
-            // Redirigir al formulario original
-            window.location.href = "https://qkstzdro6ry.typeform.com/IESsystems"; // URL original del formulario
-        };
+    (async () => {
+      const token = getTokenFromURL();
+      if (!token) {
+        document.getElementById("status").innerText = "❌ No se encontró ningún token en el enlace.";
+        return;
+      }
 
-        // Llamar a la función para verificar el estado del enlace
-        checkLinkStatus();
-    </script>
+      const result = await validateToken(token);
+      if (typeof result === "string") {
+        document.getElementById("status").innerText = result;
+      }
+    })();
+  </script>
 </body>
 </html>
