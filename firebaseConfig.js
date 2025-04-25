@@ -1,11 +1,11 @@
 const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_AUTH_DOMAIN",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_STORAGE_BUCKET",
-    messagingSenderId: "TU_MESSAGING_SENDER_ID",
-    appId: "TU_APP_ID"
+  apiKey: "AIzaSyCPi7ueFICScnAPhUuoUeo52xyxocr7T_M",
+  authDomain: "iesencuesta.firebaseapp.com",
+  projectId: "iesencuesta",
+  storageBucket: "iesencuesta.firebasestorage.app",
+  messagingSenderId: "713817230380",
+  appId: "1:713817230380:web:762944cb969becbf98d589",
+  measurementId: "G-HQ83YS382L"
 };
-
 // Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
