@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificación de Enlace</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+</head>
+<body>
+    <h1>Verificación del enlace</h1>
+    <div id="message"></div>
+
+    <script src="firebaseConfig.js"></script>
+    <script>
+        const db = firebase.firestore();
+
+        // Obtener el token de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+
+        // Función para verificar el estado del enlace
+        const checkLinkStatus = async () => {
+            const docRef = db.collection('links').doc(token);
+            const doc = await docRef.get();
+
+            if (!doc.exists) {
+                document.getElementById('message').innerText = "Este enlace ha expirado o no es válido.";
+                return;
+            }
+
+            const linkData = doc.data();
+            const currentTime = new Date().getTime();
+            const expirationTime = linkData.timestamp + 60000; // 1 minuto (60000 ms)
+            const clickLimit = 1;
+
+            // Verificar si el enlace ha expirado o si el número de clics ha alcanzado el límite
+            if (currentTime > expirationTime) {
+                document.getElementById('message').innerText = "Este enlace ha expirado.";
+                docRef.update({ expired: true });
+                return;
+            }
+
+            if (linkData.clicks >= clickLimit) {
+                document.getElementById('message').innerText = "Este enlace ha alcanzado el límite de clics.";
+                docRef.update({ expired: true });
+                return;
+            }
+
+            // Si no ha expirado y no ha alcanzado el límite de clics, incrementar los clics
+            await docRef.update({
+                clicks: linkData.clicks + 1
+            });
+
+            // Redirigir al formulario original
+            window.location.href = "https://qkstzdro6ry.typeform.com/IESsystems"; // URL original del formulario
+        };
+
+        // Llamar a la función para verificar el estado del enlace
+        checkLinkStatus();
+    </script>
+</body>
+</html>
