@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generación de Enlace con Token</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+</head>
+<body>
+    <h1>Generar Enlace con Token</h1>
+    <button id="generateLinkBtn">Generar Enlace</button>
+    <p id="generatedLink"></p>
+
+    <script src="firebaseConfig.js"></script>
+    <script>
+        const db = firebase.firestore();
+
+        // Generar UUID
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0,
+                    v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // Función para almacenar el enlace en Firestore
+        const storeLinkData = async (token) => {
+            const docRef = db.collection('links').doc(token);
+            await docRef.set({
+                token: token,
+                timestamp: new Date().getTime(),
+                clicks: 0,
+                expired: false
+            });
+        };
+
+        // Generar el enlace
+        document.getElementById('generateLinkBtn').addEventListener('click', async () => {
+            const token = generateUUID();
+            const link = `https://qkstzdro6ry.typeform.com/IESsystems?token=${token}`;
+
+            // Mostrar el enlace generado
+            document.getElementById('generatedLink').innerHTML = `<a href="${link}" target="_blank">Haz clic para acceder al formulario</a>`;
+
+            // Guardar el enlace en Firebase
+            await storeLinkData(token);
+        });
+    </script>
+</body>
+</html>
